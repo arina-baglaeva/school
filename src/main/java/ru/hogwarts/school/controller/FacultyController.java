@@ -3,6 +3,7 @@ package ru.hogwarts.school.controller;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.service.FacultyService;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -40,7 +41,6 @@ public class FacultyController {
         facultyService.deleteFaculty(id);
     }
 
-    // GET /faculty/color?color=красный - фильтрация по цвету
     @GetMapping("/color")
     public List<Faculty> getFacultiesByColor(@RequestParam String color) {
         return facultyService.getFacultiesByColor(color);

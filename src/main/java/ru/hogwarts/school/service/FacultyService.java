@@ -1,52 +1,47 @@
 package ru.hogwarts.school.service;
 
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.repository.FacultyRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 public class FacultyService {
-    private final Map<Long, Faculty> faculties = new HashMap<>();
-    private long nextId = 1;
+
+    private final FacultyRepository facultyRepository;
+
+    public FacultyService(FacultyRepository facultyRepository) {
+        this.facultyRepository = facultyRepository;
+    }
 
     public Faculty addFaculty(Faculty faculty) {
-        faculty.setId(nextId++);
-        faculties.put(faculty.getId(), faculty);
-        return faculty;
+        return facultyRepository.save(faculty);
     }
 
     public Faculty getFaculty(Long id) {
-        return faculties.get(id);
+        Optional<Faculty> optional = facultyRepository.findById(id);
+        return optional.orElse(null);
     }
 
     public List<Faculty> getAllFaculties() {
-        return new ArrayList<>(faculties.values());
+        return facultyRepository.findAll();
     }
 
     public Faculty updateFaculty(Faculty faculty) {
-        if (faculties.containsKey(faculty.getId())) {
-            faculties.put(faculty.getId(), faculty);
-            return faculty;
+        if (facultyRepository.existsById(faculty.getId())) {
+            return facultyRepository.save(faculty);
         } else {
             return null;
         }
     }
 
     public void deleteFaculty(Long id) {
-        faculties.remove(id);
+        facultyRepository.deleteById(id);
     }
 
     public List<Faculty> getFacultiesByColor(String color) {
-        List<Faculty> result = new ArrayList<>();
-        for (Faculty f : faculties.values()) {
-            if (f.getColor().equals(color)) {
-                result.add(f);
-            }
-        }
-        return result;
+        return facultyRepository.findByColor(color);
     }
 }

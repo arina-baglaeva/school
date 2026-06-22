@@ -16,7 +16,7 @@ public class StudentController {
     }
 
     @PostMapping
-    @ResponseStatus(org.springframework.http.HttpStatus.CREATED) // статус 201
+    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
     public Student createStudent(@RequestBody Student student) {
         return studentService.addStudent(student);
     }

@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS car (
+    id SERIAL PRIMARY KEY,
+    brand VARCHAR(50) NOT NULL,
+    model VARCHAR(50) NOT NULL,
+    price NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS person (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    age INTEGER CHECK (age > 0),
+    has_driver_license BOOLEAN NOT NULL DEFAULT false,
+    car_id INTEGER REFERENCES car (id) ON DELETE SET NULL
+);

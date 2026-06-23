@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -16,7 +19,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 
@@ -37,7 +39,7 @@ public class AvatarServiceImp implements AvatarService {
 
     @Override
     public void uploadAvatar(Long studentId, MultipartFile file) throws IOException {
-       Student student = studentRepository.findById(studentId)
+        Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Студент с id " + studentId + " не найден"));
 
         String extension = getExtension(file.getOriginalFilename());
@@ -79,7 +81,7 @@ public class AvatarServiceImp implements AvatarService {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
-   private byte[] generatePreview(Path filePath, String extension) throws IOException {
+    private byte[] generatePreview(Path filePath, String extension) throws IOException {
         try (InputStream is = Files.newInputStream(filePath);
              BufferedInputStream bis = new BufferedInputStream(is, 1024);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -100,5 +102,9 @@ public class AvatarServiceImp implements AvatarService {
             ImageIO.write(preview, extension, baos);
             return baos.toByteArray();
         }
+    }
+
+    public Page<Avatar> findAll(Pageable pageable) {
+        return avatarRepository.findAll(pageable);
     }
 }

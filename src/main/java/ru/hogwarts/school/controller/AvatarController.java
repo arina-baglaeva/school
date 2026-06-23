@@ -10,9 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/avatar")
@@ -24,7 +30,7 @@ public class AvatarController {
         this.avatarService = avatarService;
     }
 
-     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public void uploadAvatar(@PathVariable Long id,
                              @RequestParam MultipartFile avatar) throws IOException {
@@ -66,5 +72,11 @@ public class AvatarController {
             is.transferTo(os);
             os.flush();
         }
+    }
+
+    @GetMapping("/avatars")
+    public Page<Avatar> getAvatars(@RequestParam int page, @RequestParam int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return avatarService.findAll(pageable);
     }
 }

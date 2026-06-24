@@ -102,4 +102,70 @@ public class StudentController {
     public long getSumParallel() {
         return studentService.calculateSumParallel();
     }
+
+    @GetMapping("/print-parallel")
+    public void printStudentsParallel() {
+        List<Student> students = studentService.getAllStudents();
+
+        int count = Math.min(students.size(), 6);
+        List<Student> selected = students.subList(0, count);
+
+        if (selected.size() > 0) System.out.println(selected.get(0).getName());
+        if (selected.size() > 1) System.out.println(selected.get(1).getName());
+
+        Thread thread1 = new Thread(() -> {
+            if (selected.size() > 2) System.out.println(selected.get(2).getName());
+            if (selected.size() > 3) System.out.println(selected.get(3).getName());
+        });
+
+        Thread thread2 = new Thread(() -> {
+            if (selected.size() > 4) System.out.println(selected.get(4).getName());
+            if (selected.size() > 5) System.out.println(selected.get(5).getName());
+        });
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @GetMapping("/print-synchronized")
+    public void printStudentsSynchronized() {
+        List<Student> students = studentService.getAllStudents();
+
+        int count = Math.min(students.size(), 6);
+        List<Student> selected = students.subList(0, count);
+
+        if (selected.size() > 0) printNameSynchronized(selected.get(0).getName());
+        if (selected.size() > 1) printNameSynchronized(selected.get(1).getName());
+
+        Thread thread1 = new Thread(() -> {
+            if (selected.size() > 2) printNameSynchronized(selected.get(2).getName());
+            if (selected.size() > 3) printNameSynchronized(selected.get(3).getName());
+        });
+
+        Thread thread2 = new Thread(() -> {
+            if (selected.size() > 4) printNameSynchronized(selected.get(4).getName());
+            if (selected.size() > 5) printNameSynchronized(selected.get(5).getName());
+        });
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private synchronized void printNameSynchronized(String name) {
+        System.out.println(name);
+    }
 }

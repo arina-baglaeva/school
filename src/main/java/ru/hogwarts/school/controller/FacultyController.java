@@ -1,6 +1,7 @@
 package ru.hogwarts.school.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.hogwarts.school.model.Faculty;
@@ -8,6 +9,7 @@ import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.FacultyService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/faculty")
@@ -71,5 +73,14 @@ public class FacultyController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Faculty not found");
         }
         return faculty.getStudents();
+    }
+    @GetMapping("/longest-name")
+    public ResponseEntity<String> getLongestFacultyName() {
+        Optional<String> longest = facultyService.getLongestFacultyName();
+        if (longest.isPresent()) {
+            return ResponseEntity.ok(longest.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

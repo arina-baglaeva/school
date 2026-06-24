@@ -88,4 +88,18 @@ public class StudentController {
         return studentService.getLastFiveStudents();
     }
 
+    @GetMapping("/names-starting-with-a")
+    public List<String> getStudentNamesStartingWithA() {
+        return studentService.getStudentNamesStartingWithA();
+    }
+
+    @GetMapping("/average-age-stream")
+    public double getAverageAgeViaStream() {
+        return studentService.getAverageAgeViaStream();
+    }
+
+    @GetMapping("/sum-parallel")
+    public long getSumParallel() {
+        return studentService.calculateSumParallel();
+    }
 }

@@ -1,16 +1,17 @@
 package ru.hogwarts.school.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.AvatarRepository;
 import ru.hogwarts.school.repository.StudentRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -26,6 +27,8 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 @Transactional
 public class AvatarServiceImp implements AvatarService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AvatarServiceImp.class);
+
     private final AvatarRepository avatarRepository;
     private final StudentRepository studentRepository;
 
@@ -39,20 +42,34 @@ public class AvatarServiceImp implements AvatarService {
 
     @Override
     public void uploadAvatar(Long studentId, MultipartFile file) throws IOException {
+        logger.info("Was invoked method for upload avatar for student with id: {}", studentId);
+
+        if (file == null || file.isEmpty()) {
+            logger.error("Avatar file is empty for student id: {}", studentId);
+            throw new IllegalArgumentException("Avatar file cannot be empty");
+        }
+
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Студент с id " + studentId + " не найден"));
+                .orElseThrow(() -> {
+                    logger.error("Student with id {} not found", studentId);
+                    return new IllegalArgumentException("Student with id " + studentId + " not found");
+                });
 
         String extension = getExtension(file.getOriginalFilename());
-
         Path filePath = Paths.get(avatarsDir, studentId + "." + extension);
-        Files.createDirectories(filePath.getParent());
-        Files.deleteIfExists(filePath);
 
-        try (InputStream is = file.getInputStream();
-             OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
-             BufferedInputStream bis = new BufferedInputStream(is, 1024);
-             BufferedOutputStream bos = new BufferedOutputStream(os, 1024)) {
-            bis.transferTo(bos);
+        try {
+            Files.createDirectories(filePath.getParent());
+            Files.deleteIfExists(filePath);
+
+            try (InputStream is = file.getInputStream();
+                 OutputStream os = Files.newOutputStream(filePath, CREATE_NEW)) {
+                is.transferTo(os);
+            }
+            logger.debug("Avatar file saved to disk: {}", filePath);
+        } catch (IOException e) {
+            logger.error("Error saving avatar file for student id {}: {}", studentId, e.getMessage());
+            throw e;
         }
 
         byte[] previewData = generatePreview(filePath, extension);
@@ -66,12 +83,22 @@ public class AvatarServiceImp implements AvatarService {
         avatar.setData(previewData);
 
         avatarRepository.save(avatar);
+        logger.info("Avatar for student id {} successfully uploaded and saved", studentId);
     }
 
     @Override
     public Avatar findAvatar(Long studentId) {
+        logger.info("Was invoked method for find avatar by student id: {}", studentId);
         return avatarRepository.findByStudentId(studentId)
                 .orElse(null);
+    }
+
+    public Page<Avatar> findAll(Pageable pageable) {
+        logger.info("Was invoked method for get all avatars with pagination: page={}, size={}",
+                pageable.getPageNumber(), pageable.getPageSize());
+        Page<Avatar> page = avatarRepository.findAll(pageable);
+        logger.debug("Found {} avatars out of {}", page.getContent().size(), page.getTotalElements());
+        return page;
     }
 
     private String getExtension(String fileName) {
@@ -83,12 +110,12 @@ public class AvatarServiceImp implements AvatarService {
 
     private byte[] generatePreview(Path filePath, String extension) throws IOException {
         try (InputStream is = Files.newInputStream(filePath);
-             BufferedInputStream bis = new BufferedInputStream(is, 1024);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
-            BufferedImage image = ImageIO.read(bis);
+            BufferedImage image = ImageIO.read(is);
             if (image == null) {
-                throw new IOException("Не удалось прочитать изображение");
+                logger.error("Cannot read image file: {}", filePath);
+                throw new IOException("Cannot read image file");
             }
 
             int width = 100;
@@ -102,9 +129,5 @@ public class AvatarServiceImp implements AvatarService {
             ImageIO.write(preview, extension, baos);
             return baos.toByteArray();
         }
-    }
-
-    public Page<Avatar> findAll(Pageable pageable) {
-        return avatarRepository.findAll(pageable);
     }
 }
